@@ -6,5 +6,6 @@ setup(
     packages=find_packages(),    # automatically finds db_sync folder
     install_requires=[
         # Add dependencies here if needed
+        "psycopg2-binary"
     ],
 )
