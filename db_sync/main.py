@@ -8,6 +8,7 @@ def run(config: dict) -> bool:
 
         table = config.get("table")
         batch_size = config.get("batch_size", 100)
+        name = config.get("name") 
 
         if not table:
             raise ValueError("table is required")
@@ -42,11 +43,10 @@ def run(config: dict) -> bool:
 
         print(f"Table {table} ensured.")
 
-        cursor.execute(f"""
-            INSERT INTO {table} (name)
-            VALUES ('sample_data')
-            RETURNING id;
-        """)
+        cursor.execute(
+            f"INSERT INTO {table} (name) VALUES (%s) RETURNING id;",
+            (name,) 
+        )
 
         inserted_id = cursor.fetchone()[0]
         conn.commit()
