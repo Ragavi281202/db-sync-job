@@ -1,26 +1,26 @@
 import os
 import psycopg2
+import logging
 
+logger = logging.getLogger(__name__)
 
 def run(config: dict) -> bool:
     try:
-        print("Running DB Sync Job")
+        logger.info("Running DB Sync Job")
 
-        table = config.get("table")
-        batch_size = config.get("batch_size", 100)
+        table_name = config.get("table_name")
         name = config.get("name") 
 
-        if not table:
-            raise ValueError("table is required")
+        if not table_name:
+            raise ValueError("table name is required")
 
-        # Get DB credentials from environment
         host = os.getenv("DB_HOST")
         dbname = os.getenv("DB_NAME")
         user = os.getenv("DB_USER")
         password = os.getenv("DB_PASSWORD")
         port = os.getenv("DB_PORT", 5432)
 
-        print(f"Connecting to DB at {host}")
+        logger.info(f"Connecting to DB at {host}")
 
         conn = psycopg2.connect(
             host=host,
@@ -33,7 +33,7 @@ def run(config: dict) -> bool:
         cursor = conn.cursor()
 
         cursor.execute(f"""
-            CREATE TABLE IF NOT EXISTS {table} (
+            CREATE TABLE IF NOT EXISTS {table_name} (
                 id SERIAL PRIMARY KEY,
                 name TEXT
             );
@@ -41,23 +41,25 @@ def run(config: dict) -> bool:
 
         conn.commit()
 
-        print(f"Table {table} ensured.")
+        logger.info(f"Table {table_name} ensured.")
 
         cursor.execute(
-            f"INSERT INTO {table} (name) VALUES (%s) RETURNING id;",
+            f"INSERT INTO {table_name} (name) VALUES (%s) RETURNING id;",
             (name,) 
         )
 
         inserted_id = cursor.fetchone()[0]
         conn.commit()
 
-        print(f"Inserted row with id: {inserted_id}")
+        logger.info(f"Inserted row with id: {inserted_id}")
 
         cursor.close()
         conn.close()
 
+        logger.info("DB Sync Job completed successfully")
+
         return True
 
     except Exception as e:
-        print("Error:", str(e))
+        logger.error("Error occurred: %s", str(e))
         return False
