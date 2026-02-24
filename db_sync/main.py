@@ -8,12 +8,13 @@ def run(config: dict) -> bool:
     try:
         logger.info("Running DB Sync Job")
 
-        table_name = config.get("table_name")
+        table = config.get("table")
         name = config.get("name") 
 
-        if not table_name:
-            raise ValueError("table name is required")
+        if not table:
+            raise ValueError("table is required")
 
+        # Get DB credentials from environment
         host = os.getenv("DB_HOST")
         dbname = os.getenv("DB_NAME")
         user = os.getenv("DB_USER")
@@ -33,7 +34,7 @@ def run(config: dict) -> bool:
         cursor = conn.cursor()
 
         cursor.execute(f"""
-            CREATE TABLE IF NOT EXISTS {table_name} (
+            CREATE TABLE IF NOT EXISTS {table} (
                 id SERIAL PRIMARY KEY,
                 name TEXT
             );
@@ -41,10 +42,10 @@ def run(config: dict) -> bool:
 
         conn.commit()
 
-        logger.info(f"Table {table_name} ensured.")
+        logger.info(f"Table {table} ensured.")
 
         cursor.execute(
-            f"INSERT INTO {table_name} (name) VALUES (%s) RETURNING id;",
+            f"INSERT INTO {table} (name) VALUES (%s) RETURNING id;",
             (name,) 
         )
 
